@@ -1,0 +1,98 @@
+package main
+
+func (st SectionTable) CharacteristicsStringify() (ret string) {
+	if st.Characteristics & IMAGE_SCN_TYPE_NO_PAD == IMAGE_SCN_TYPE_NO_PAD {
+		ret += ",IMAGE_SCN_TYPE_NO_PAD"
+	}
+	if st.Characteristics & IMAGE_SCN_CNT_CODE == IMAGE_SCN_CNT_CODE {
+		ret += ",IMAGE_SCN_CNT_CODE"
+	}
+	if st.Characteristics & IMAGE_SCN_CNT_INITIALIZED_DATA == IMAGE_SCN_CNT_INITIALIZED_DATA {
+		ret += ",IMAGE_SCN_CNT_INITIALIZED_DATA"
+	}
+	if st.Characteristics & IMAGE_SCN_CNT_UNINITIALIZED_DATA == IMAGE_SCN_CNT_UNINITIALIZED_DATA {
+		ret += ",IMAGE_SCN_CNT_UNINITIALIZED_DATA"
+	}
+	if st.Characteristics & IMAGE_SCN_LNK_OTHER == IMAGE_SCN_LNK_OTHER {
+		ret += ",IMAGE_SCN_LNK_OTHER"
+	}
+	if st.Characteristics & IMAGE_SCN_LNK_INFO == IMAGE_SCN_LNK_INFO {
+		ret += ",IMAGE_SCN_LNK_INFO"
+	}
+	if st.Characteristics & IMAGE_SCN_LNK_REMOVE == IMAGE_SCN_LNK_REMOVE {
+		ret += ",IMAGE_SCN_LNK_REMOVE"
+	}
+	if st.Characteristics & IMAGE_SCN_LNK_COMDAT == IMAGE_SCN_LNK_COMDAT {
+		ret += ",IMAGE_SCN_LNK_COMDAT"
+	}
+	if st.Characteristics & IMAGE_SCN_GPREL == IMAGE_SCN_GPREL {
+		ret += ",IMAGE_SCN_GPREL"
+	}
+	if st.Characteristics & IMAGE_SCN_MEM_PURGEABLE == IMAGE_SCN_MEM_PURGEABLE {
+		ret += ",IMAGE_SCN_MEM_PURGEABLE"
+	}
+	if st.Characteristics & IMAGE_SCN_MEM_16BIT == IMAGE_SCN_MEM_16BIT {
+		ret += ",IMAGE_SCN_MEM_16BIT"
+	}
+	if st.Characteristics & IMAGE_SCN_MEM_LOCKED == IMAGE_SCN_MEM_LOCKED {
+		ret += ",IMAGE_SCN_MEM_LOCKED"
+	}
+	if st.Characteristics & IMAGE_SCN_MEM_PRELOAD == IMAGE_SCN_MEM_PRELOAD {
+		ret += ",IMAGE_SCN_MEM_PRELOAD"
+	}
+	switch align := st.Characteristics & 0x00F00000; align {
+	case IMAGE_SCN_ALIGN_8192BYTES:
+		ret += ",IMAGE_SCN_ALIGN_8192BYTES"
+	case IMAGE_SCN_ALIGN_4096BYTES:
+		ret += ",IMAGE_SCN_ALIGN_4096BYTES"
+	case IMAGE_SCN_ALIGN_2048BYTES:
+		ret += ",IMAGE_SCN_ALIGN_2048BYTES"
+	case IMAGE_SCN_ALIGN_1024BYTES:
+		ret += ",IMAGE_SCN_ALIGN_1024BYTES"
+	case IMAGE_SCN_ALIGN_512BYTES:
+		ret += ",IMAGE_SCN_ALIGN_512BYTES"
+	case IMAGE_SCN_ALIGN_256BYTES:
+		ret += ",IMAGE_SCN_ALIGN_256BYTES"
+	case IMAGE_SCN_ALIGN_128BYTES:
+		ret += ",IMAGE_SCN_ALIGN_128BYTES"
+	case IMAGE_SCN_ALIGN_64BYTES:
+		ret += ",IMAGE_SCN_ALIGN_64BYTES"
+	case IMAGE_SCN_ALIGN_32BYTES:
+		ret += ",IMAGE_SCN_ALIGN_32BYTES"
+	case IMAGE_SCN_ALIGN_16BYTES:
+		ret += ",IMAGE_SCN_ALIGN_16BYTES"
+	case IMAGE_SCN_ALIGN_8BYTES:
+		ret += ",IMAGE_SCN_ALIGN_8BYTES"
+	case IMAGE_SCN_ALIGN_4BYTES:
+		ret += ",IMAGE_SCN_ALIGN_4BYTES"
+	case IMAGE_SCN_ALIGN_2BYTES:
+		ret += ",IMAGE_SCN_ALIGN_2BYTES"
+	case IMAGE_SCN_ALIGN_1BYTES:
+		ret += ",IMAGE_SCN_ALIGN_1BYTES"
+	}
+	if st.Characteristics & IMAGE_SCN_LNK_NRELOC_OVFL == IMAGE_SCN_LNK_NRELOC_OVFL {
+		ret += ",IMAGE_SCN_LNK_NRELOC_OVFL"
+	}
+	if st.Characteristics & IMAGE_SCN_MEM_DISCARDABLE == IMAGE_SCN_MEM_DISCARDABLE {
+		ret += ",IMAGE_SCN_MEM_DISCARDABLE"
+	}
+	if st.Characteristics & IMAGE_SCN_MEM_NOT_CACHED == IMAGE_SCN_MEM_NOT_CACHED {
+		ret += ",IMAGE_SCN_MEM_NOT_CACHED"
+	}
+	if st.Characteristics & IMAGE_SCN_MEM_NOT_PAGED == IMAGE_SCN_MEM_NOT_PAGED {
+		ret += ",IMAGE_SCN_MEM_NOT_PAGED"
+	}
+	if st.Characteristics & IMAGE_SCN_MEM_SHARED == IMAGE_SCN_MEM_SHARED {
+		ret += ",IMAGE_SCN_MEM_SHARED"
+	}
+	if st.Characteristics & IMAGE_SCN_MEM_EXECUTE == IMAGE_SCN_MEM_EXECUTE {
+		ret += ",IMAGE_SCN_MEM_EXECUTE"
+	}
+	if st.Characteristics & IMAGE_SCN_MEM_READ == IMAGE_SCN_MEM_READ {
+		ret += ",IMAGE_SCN_MEM_READ"
+	}
+	if st.Characteristics & IMAGE_SCN_MEM_WRITE == IMAGE_SCN_MEM_WRITE {
+		ret += ",IMAGE_SCN_MEM_WRITE"
+	}
+	return ret[1:]
+}
