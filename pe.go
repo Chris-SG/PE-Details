@@ -1,4 +1,4 @@
-package main
+package pe_details
 
 import (
 	"bytes"
@@ -6,31 +6,27 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"os"
 )
 
-func main() {
-	peFile := Process(os.Args[1])
-	f, _ := json.Marshal(peFile)
-	fmt.Printf("%s\n", string(f))
+//export GeneratePEFileStructure
+func GeneratePEFileStructureJson(b []byte) (j []byte) {
+	j, _ = json.Marshal(GeneratePEFileStructure(b))
+	return
 }
 
-func Process(path string) (peFile PEFile) {
-	f, err := os.Open(path)
-	if err != nil {
-		return
-	}
-	b := make([]byte, 0)
-	c := 0
+func GeneratePEFileStructure(data []byte) (peFile PEFile) {
+	b := make([]byte, 2)
+	br := bytes.NewReader(data)
 
-	b = make([]byte, 2)
-	if c, err = f.ReadAt(b, 0x0); c == 2 && b[0] == 'M' && b[1] == 'Z' {
+	br.Read(b)
+	if len(b) == 2 && b[0] == 'M' && b[1] == 'Z' {
 		b = make([]byte, 4)
-		f.ReadAt(b, 0x3c)
+		br.Seek(0x3c, io.SeekStart)
+		br.Read(b)
 		peFile.HasStub = true
 		peFile.Offset = PEOffset(binary.LittleEndian.Uint32(b))
 		peFile.ExecutableType = Image
-	} else if c < 2 || err != nil {
+	} else if len(b) < 2 {
 		peFile.ExecutableType = Unknown
 		return
 	} else {
@@ -42,9 +38,9 @@ func Process(path string) (peFile PEFile) {
 	additionalOffset := PEOffset(0)
 
 	if peFile.ExecutableType == Image {
-		f.Seek(int64(peFile.Offset), 0)
+		br.Seek(int64(peFile.Offset), io.SeekStart)
 		b = make([]byte, 4)
-		f.Read(b)
+		br.Read(b)
 		exp := []byte{ 'P', 'E', byte(0), byte(0) }
 		if bytes.Compare(b, exp) != 0 {
 			return
@@ -54,34 +50,38 @@ func Process(path string) (peFile PEFile) {
 
 	coffHeaderSz := 20
 	b = make([]byte, coffHeaderSz)
-	f.Seek(int64(peFile.Offset + additionalOffset), io.SeekStart)
-	f.Read(b)
-	peFile.CoffHeader = CreateCOFFHeader(b)
+	br.Seek(int64(peFile.Offset + additionalOffset), io.SeekStart)
+	br.Read(b)
+	peFile.CoffHeader = createCOFFHeader(b)
 	additionalOffset += PEOffset(coffHeaderSz)
 
 	if peFile.ExecutableType == Image {
 		b = make([]byte, peFile.CoffHeader.OptionalHeaderSz)
-		f.Seek(int64(peFile.Offset + additionalOffset), io.SeekStart)
-		f.Read(b)
-		peFile.OptionalHeader = CreateOptionalHeader(b)
+		br.Seek(int64(peFile.Offset + additionalOffset), io.SeekStart)
+		br.Read(b)
+		peFile.OptionalHeader = createOptionalHeader(b)
 		additionalOffset += PEOffset(peFile.CoffHeader.OptionalHeaderSz)
 	}
 
 	b = make([]byte, int(peFile.CoffHeader.NumberOfSections) * binary.Size(SectionTable{}))
-	f.Seek(int64(peFile.Offset + additionalOffset), io.SeekStart)
-	f.Read(b)
-	peFile.SectionTables = CreateSections(b)
+	br.Seek(int64(peFile.Offset + additionalOffset), io.SeekStart)
+	br.Read(b)
+	peFile.SectionTables = createSections(b)
 	additionalOffset += PEOffset(len(b))
+
+	if peFile.ExecutableType == Object {
+		peFile.CoffRelocations = peFile.createCOFFRelocations(br)
+	}
 
 	return
 }
 
-func CreateCOFFHeader(b []byte) (h COFFHeader) {
+func createCOFFHeader(b []byte) (h COFFHeader) {
 	binary.Read(bytes.NewReader(b), binary.LittleEndian, &h)
 	return
 }
 
-func CreateOptionalHeader(b []byte) (h OptionalHeader) {
+func createOptionalHeader(b []byte) (h OptionalHeader) {
 	br := bytes.NewReader(b)
 	magicNumber := int16(0x020b)
 	fmt.Println(br.Size() - int64(br.Len()) )
@@ -113,12 +113,48 @@ func CreateOptionalHeader(b []byte) (h OptionalHeader) {
 	return
 }
 
-func CreateSections(b []byte) (sections []SectionTable) {
+func createSections(b []byte) (sections []SectionTable) {
 	br := bytes.NewReader(b)
 	for br.Len() >= binary.Size(SectionTable{}) {
 		st := SectionTable{}
 		binary.Read(br, binary.LittleEndian, &st)
 		sections = append(sections, st)
 	}
+	return
+}
+
+func (pf PEFile) createCOFFRelocations(br *bytes.Reader) (coffRelocations []CoffRelocation) {
+	for _, section := range pf.SectionTables {
+		br.Seek(int64(section.PointerToRawData), io.SeekStart)
+		cr := CoffRelocation{}
+		binary.Read(br, binary.LittleEndian, &cr)
+		coffRelocations = append(coffRelocations, cr)
+	}
+	return
+}
+
+func (pf PEFile) createCOFFSymbolTable(br *bytes.Reader) (coffSymbolTable CoffSymbolTable) {
+	if pf.CoffHeader.NumberOfSymbols > 0 {
+		br.Seek(int64(pf.CoffHeader.SymbolTablePtr), io.SeekStart)
+		for idx := int32(0); idx < pf.CoffHeader.NumberOfSymbols; idx++ {
+			coffSymbolTable.Symbols = append(coffSymbolTable.Symbols, createCOFFSymbol(br))
+		}
+	}
+	return
+}
+
+func createCOFFSymbol(br *bytes.Reader) (coffSymbol CoffSymbol) {
+	coffSymbol.AuxSymbols = make([]AuxSymbol, 0)
+
+	binary.Read(br, binary.LittleEndian, &coffSymbol)
+	coffSymbol.AuxSymbols = createAuxSymbols(br, coffSymbol.NumberOfAuxSymbols)
+
+	return
+}
+
+func createAuxSymbols(br *bytes.Reader, count byte) (auxSymbols []AuxSymbol) {
+	auxSymbols = make([]AuxSymbol, count)
+	binary.Read(br, binary.LittleEndian, &auxSymbols)
+
 	return
 }

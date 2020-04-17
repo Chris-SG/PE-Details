@@ -1,4 +1,4 @@
-package main
+package pe_details
 
 func (st SectionTable) CharacteristicsStringify() (ret string) {
 	if st.Characteristics & IMAGE_SCN_TYPE_NO_PAD == IMAGE_SCN_TYPE_NO_PAD {

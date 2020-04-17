@@ -1,4 +1,4 @@
-package main
+package pe_details
 
 import (
 	"fmt"
@@ -21,6 +21,12 @@ func (pf PEFile) Print(tabCount int) (ret string) {
 		prefix, prefix, pf.ExecutableType, prefix, pf.Offset, prefix, pf.CoffHeader.Print(tabCount+1),
 		prefix, pf.OptionalHeader.Print(tabCount+1), prefix)
 	for _, s := range pf.SectionTables {
+		ret = fmt.Sprintf("%s\n%s\t%s", ret, prefix, s.Print(tabCount+1))
+	}
+	ret = fmt.Sprintf("%s" +
+		"\n%s\tCOFF Relocations:\n",
+		ret, prefix)
+	for _, s := range pf.CoffRelocations {
 		ret = fmt.Sprintf("%s\n%s\t%s", ret, prefix, s.Print(tabCount+1))
 	}
 	ret = fmt.Sprintf("%s%s]\n", ret, prefix)
@@ -144,5 +150,20 @@ func (st SectionTable) Print(tabCount int) (ret string) {
 		prefix, st.SizeOfRawData, prefix, st.PointerToRawData, prefix, st.PointerToRelocations,
 		prefix, st.PointerToLineNumbers, prefix, st.NumberOfRelocations, prefix, st.NumberOfLineNumbers,
 		prefix, st.Characteristics, prefix, st.CharacteristicsStringify(), prefix)
+	return
+}
+
+func (cf CoffRelocation) Print(tabCount int) (ret string) {
+	prefix := ""
+	for i := 0; i < tabCount; i++ {
+		prefix += "\t"
+	}
+	ret = fmt.Sprintf( "%s\n[\n", prefix)
+
+	v := reflect.ValueOf(cf)
+	for i := 0; i < v.NumField(); i++ {
+		ret = fmt.Sprintf( "%s%s\t%s: %#x\n", ret, prefix, v.Type().Field(i).Name, v.Field(i).Interface())
+	}
+	ret = fmt.Sprintf( "%s%s]\n", ret, prefix)
 	return
 }

@@ -1,4 +1,4 @@
-package main
+package pe_details
 
 type PEOffset int64
 type PEFile struct {
@@ -9,12 +9,15 @@ type PEFile struct {
 	CoffHeader COFFHeader
 	OptionalHeader OptionalHeader
 	SectionTables []SectionTable
+
+	CoffRelocations []CoffRelocation
+	CoffSymbolTable CoffSymbolTable
 }
 
 type ExecutableType int
 const (
-	Unknown ExecutableType = iota
-	Image ExecutableType = iota + 1
+	Unknown ExecutableType = iota + 1
+	Image
 	Object
 )
 
@@ -159,3 +162,32 @@ const (
 	IMAGE_SCN_MEM_READ AvailableCharacteristics = 0x40000000
 	IMAGE_SCN_MEM_WRITE AvailableCharacteristics = 0x80000000
 )
+
+type CoffRelocation struct {
+	SectionIdx int32
+	VirtualAddress int32
+	SymbolTableIndex int32
+	Type int16
+}
+
+type CoffSymbolTable struct {
+	Symbols []CoffSymbol
+}
+
+type CoffSymbol struct {
+	Name [8]byte
+	Value int32
+	SectionNumber int16
+	Type int16
+	StorageClass byte
+	NumberOfAuxSymbols byte
+	AuxSymbols []AuxSymbol
+}
+
+type AuxSymbol struct {
+	TagIndex int32
+	TotalSize int32
+	PointerToLinenumber int32
+	PointerToNextFunction int32
+	Unused int16
+}
