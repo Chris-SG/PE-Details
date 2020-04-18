@@ -1,4 +1,4 @@
-package pe_details
+package main
 
 import (
 	"bytes"
